@@ -1,9 +1,5 @@
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,74 +7,76 @@ using UnityEngine.UI;
 
 public class ButtonListner : MonoBehaviour
 {
-    public Button[] Buttons;
+    private Button[] _buttons;
+    private FsmState[] _states;
 
-    // Start is called before the first frame update
     void Start()
     {
-        Buttons = Button.FindObjectsOfType<Button>();
+        _buttons = Button.FindObjectsOfType<Button>();
 
         var PMfsm = gameObject.AddComponent<PlayMakerFSM>();
         PMfsm.SendEvent("FINISHED");
-        var states = PMfsm.FsmStates;
-        PMfsm.Fsm.States = new FsmState[] { new FsmState(states[0]), new FsmState(states[0]), new FsmState(states[0]) };
-        states = PMfsm.Fsm.States;
+
+        CreateStates(PMfsm);
 
         UiButtonArray btnArray = new UiButtonArray();
-        btnArray.gameObjects = new FsmGameObject[Buttons.Length];
-        btnArray.clickEvents = new FsmEvent[Buttons.Length];
-        for (int i = 0; i < Buttons.Length; i++)
+        btnArray.gameObjects = new FsmGameObject[_buttons.Length];
+        btnArray.clickEvents = new FsmEvent[_buttons.Length];
+        for (int i = 0; i < _buttons.Length; i++)
         {
-            btnArray.gameObjects[i] = Buttons[i].gameObject;
+            btnArray.gameObjects[i] = _buttons[i].gameObject;
             btnArray.clickEvents[i] = FsmEvent.Finished;
         }
-
+        btnArray.clickIndex = 0;
         FsmStateAction action1 = btnArray;
 
         Wait wait = new Wait();
         wait.time = 3;
         FsmStateAction action2 = wait;
+
         DebugLog debug = new DebugLog();
         debug.sendToUnityLog = true;
         debug.text = "Debug done";
         FsmStateAction action3 = debug;
 
-        states[0].Actions = new FsmStateAction[] { action1 };
-        states[0].Name = "State 1";
-        states[0].SaveActions();
+        _states[0].Name = "State 1";
+        CreateAction(0, action1);
 
-        states[1].Actions = new FsmStateAction[] { action2 };
-        states[1].Name = "State 2";
-        states[1].SaveActions();
+        _states[1].Name = "Wait";
+        CreateAction(1, action2);
 
-        states[2].Actions = new FsmStateAction[] { action3 };
-        states[2].Name = "State 3";
-        states[2].SaveActions();
+        _states[2].Name = "Debug";
+        CreateAction(2, action3);
 
-        FsmTransition Transition = new FsmTransition();
-        FsmTransition Transition1 = new FsmTransition();
-        FsmTransition Transition2 = new FsmTransition();
+        FsmTransition transition1 = new FsmTransition();
+        FsmTransition transition2 = new FsmTransition();
+        FsmTransition transition3 = new FsmTransition();
 
-        states[0].Transitions = new FsmTransition[] { Transition };
-        states[0].Transitions[0].FsmEvent = FsmEvent.Finished;
-        states[0].Transitions[0].ToFsmState = states[1];
+        CreateTransition(0, 0, transition1, FsmEvent.Finished, _states[1]);
+        CreateTransition(1, 0, transition2, FsmEvent.Finished, _states[2]);
+        CreateTransition(2, 0, transition3, FsmEvent.Finished, _states[0]);
 
-        states[1].Transitions = new FsmTransition[] { Transition1 };
-        states[1].Transitions[0].FsmEvent = FsmEvent.Finished;
-        states[1].Transitions[0].ToFsmState = states[2];
-
-        states[2].Transitions = new FsmTransition[] { Transition2 };
-        states[2].Transitions[0].FsmEvent = FsmEvent.Finished;
-        states[2].Transitions[0].ToFsmState = states[0];
-
-        PMfsm.Fsm.RestartOnEnable = true;
         gameObject.SetActive(false);
         gameObject.SetActive(true);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void CreateStates(PlayMakerFSM PMfsm)
     {
-        
+        _states = PMfsm.FsmStates;
+        PMfsm.Fsm.States = new FsmState[] { new FsmState(_states[0]), new FsmState(_states[0]), new FsmState(_states[0]) };
+        _states = PMfsm.Fsm.States;
+    }
+
+    private void CreateAction(int stateIndex, FsmStateAction action)
+    {
+        _states[stateIndex].Actions = new FsmStateAction[] { action };
+        _states[stateIndex].SaveActions();
+    }
+
+    private void CreateTransition(int stateIndex, int trasitionIndex, FsmTransition transition, FsmEvent clickEvent, FsmState transitionTo)
+    {
+        _states[stateIndex].Transitions = new FsmTransition[] { transition };
+        _states[stateIndex].Transitions[trasitionIndex].FsmEvent = clickEvent;
+        _states[stateIndex].Transitions[trasitionIndex].ToFsmState = transitionTo;
     }
 }
