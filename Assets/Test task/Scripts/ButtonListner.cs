@@ -3,8 +3,6 @@ using HutongGames.PlayMaker.Actions;
 using UnityEngine;
 using UnityEngine.UI;
 
-
-
 public class ButtonListner : MonoBehaviour
 {
     private Button[] _buttons;
@@ -17,7 +15,7 @@ public class ButtonListner : MonoBehaviour
         var PMfsm = gameObject.AddComponent<PlayMakerFSM>();
         PMfsm.SendEvent("FINISHED");
 
-        CreateStates(PMfsm);
+        _states = CreateStates(PMfsm);
 
         UiButtonArray btnArray = new UiButtonArray();
         btnArray.gameObjects = new FsmGameObject[_buttons.Length];
@@ -60,11 +58,11 @@ public class ButtonListner : MonoBehaviour
         gameObject.SetActive(true);
     }
 
-    private void CreateStates(PlayMakerFSM PMfsm)
+    private FsmState[] CreateStates(PlayMakerFSM PMfsm)
     {
-        _states = PMfsm.FsmStates;
-        PMfsm.Fsm.States = new FsmState[] { new FsmState(_states[0]), new FsmState(_states[0]), new FsmState(_states[0]) };
-        _states = PMfsm.Fsm.States;
+        var states = PMfsm.FsmStates;
+        PMfsm.Fsm.States = new FsmState[] { new FsmState(states[0]), new FsmState(states[0]), new FsmState(states[0]) };
+        return PMfsm.Fsm.States;
     }
 
     private void CreateAction(int stateIndex, FsmStateAction action)
